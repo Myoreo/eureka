@@ -2,4 +2,5 @@ dependencies {
     compile project(':eureka-core')
     compile "junit:junit:${junit_version}"
     compile "org.mockito:mockito-core:${mockitoVersion}"
+	compile "com.sun.net.httpserver:http:20070405"
 }

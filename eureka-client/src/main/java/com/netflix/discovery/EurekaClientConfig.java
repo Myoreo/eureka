@@ -57,7 +57,7 @@ public interface EurekaClientConfig {
     /**
      * Indicates how often(in seconds) to fetch the registry information from
      * the eureka server.
-     *
+     * 从 Eureka-Server 拉取注册信息频率，单位：秒
      * @return the fetch interval in seconds.
      */
     int getRegistryFetchIntervalSeconds();
@@ -65,7 +65,7 @@ public interface EurekaClientConfig {
     /**
      * Indicates how often(in seconds) to replicate instance changes to be
      * replicated to the eureka server.
-     *
+     * 向 Eureka-Server 同步实例对象信息变化频率，单位：秒
      * @return the instance replication interval in seconds.
      */
     int getInstanceInfoReplicationIntervalSeconds();
@@ -73,13 +73,14 @@ public interface EurekaClientConfig {
     /**
      * Indicates how long initially (in seconds) to replicate instance info
      * to the eureka server
+     * 向 Eureka-Server 同步应用信息变化初始化延迟，单位：秒
      */
     int getInitialInstanceInfoReplicationIntervalSeconds();
 
     /**
      * Indicates how often(in seconds) to poll for changes to eureka server
      * information.
-     *
+     * 轮询获取 Eureka-Server 地址变更频率，单位：秒
      * <p>
      * Eureka servers could be added or removed and this setting controls how
      * soon the eureka clients should know about it.
@@ -131,7 +132,7 @@ public interface EurekaClientConfig {
     /**
      * Indicates how long to wait (in seconds) before a read from eureka server
      * needs to timeout.
-     *
+     * Eureka-Server 读取超时时间
      * @return time in seconds before the read should timeout.
      */
     int getEurekaServerReadTimeoutSeconds();
@@ -146,7 +147,7 @@ public interface EurekaClientConfig {
      * connection creation and also the wait time to get the connection from the
      * pool.
      * </p>
-     *
+     * Eureka-Server 连接超时时间
      * @return time in seconds before the connections should timeout.
      */
     int getEurekaServerConnectTimeoutSeconds();
@@ -160,7 +161,10 @@ public interface EurekaClientConfig {
      * This may be needed for applications which needs additional resiliency for
      * registry information without which it cannot operate.
      * </p>
+     * 获取备份注册中心实现类
      *
+     * 当 Eureka-Client 启动时，无法从 Eureka-Server 读取注册信息（可能挂了），从备份注册中心读取注册信息
+     * ps：目前 Eureka-Client 未提供合适的实现。
      * @return the class name which implements {@link BackupRegistry}.
      */
     String getBackupRegistryImpl();

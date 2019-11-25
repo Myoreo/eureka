@@ -73,6 +73,7 @@ class InstanceInfoReplicator implements Runnable {
     }
 
     public boolean onDemandUpdate() {
+		// 限流相关
         if (rateLimiter.acquire(burstSize, allowedRatePerMinute)) {
             scheduler.submit(new Runnable() {
                 @Override
@@ -95,18 +96,22 @@ class InstanceInfoReplicator implements Runnable {
         }
     }
 
+	// 定时检查 InstanceInfo 的状态( status ) 属性是否发生变化。若是，发起注册
     public void run() {
         try {
+			// 刷新应用实例信息
             discoveryClient.refreshInstanceInfo();
-
+			// 判断 应用实例信息 是否数据不一致
             Long dirtyTimestamp = instanceInfo.isDirtyWithTime();
             if (dirtyTimestamp != null) {
+				// 注册
                 discoveryClient.register();
                 instanceInfo.unsetIsDirty(dirtyTimestamp);
             }
         } catch (Throwable t) {
             logger.warn("There was a problem with the instance info replicator", t);
         } finally {
+			// 提交任务 一直循环下去
             Future next = scheduler.schedule(this, replicationIntervalSeconds, TimeUnit.SECONDS);
             scheduledPeriodicRef.set(next);
         }

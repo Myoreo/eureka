@@ -138,18 +138,30 @@ public class DiscoveryClient implements EurekaClient {
      * - scheduling a TimedSuperVisorTask
      */
     private final ScheduledExecutorService scheduler;
-    // additional executors for supervised subtasks
+    // additional executors for supervised subtasks 心跳执行器
     private final ThreadPoolExecutor heartbeatExecutor;
+    /**
+     * 刷新执行器
+     */
     private final ThreadPoolExecutor cacheRefreshExecutor;
 
     private final Provider<HealthCheckHandler> healthCheckHandlerProvider;
     private final Provider<HealthCheckCallback> healthCheckCallbackProvider;
+    /**
+     * Applications 在本地的缓存
+     */
     private final AtomicReference<Applications> localRegionApps = new AtomicReference<Applications>();
     private final Lock fetchRegistryUpdateLock = new ReentrantLock();
-    // monotonically increasing generation counter to ensure stale threads do not reset registry to an older version
+    /**
+     * 拉取注册信息次数
+     * monotonically increasing generation counter to ensure stale threads do not reset registry to an older version
+     */
     private final AtomicLong fetchRegistryGeneration;
     private final ApplicationInfoManager applicationInfoManager;
     private final InstanceInfo instanceInfo;
+    /**sync
+     * 获取哪些区域( Region )集合的注册信息
+     */
     private final AtomicReference<String> remoteRegionsToFetch;
     private final AtomicReference<String[]> remoteRegionsRef;
     private final InstanceRegionChecker instanceRegionChecker;
@@ -161,17 +173,41 @@ public class DiscoveryClient implements EurekaClient {
     private volatile HealthCheckHandler healthCheckHandler;
     private volatile Map<String, Applications> remoteRegionVsApps = new ConcurrentHashMap<>();
     private volatile InstanceInfo.InstanceStatus lastRemoteInstanceStatus = InstanceInfo.InstanceStatus.UNKNOWN;
+    /**
+     * Eureka 事件监听器
+     */
     private final CopyOnWriteArraySet<EurekaEventListener> eventListeners = new CopyOnWriteArraySet<>();
 
     private String appPathIdentifier;
+    /**
+     * 应用实例状态变更监听器
+     */
     private ApplicationInfoManager.StatusChangeListener statusChangeListener;
 
+    /**
+     * 应用实例信息复制器
+     */
     private InstanceInfoReplicator instanceInfoReplicator;
 
+    /**
+     * 注册信息的应用实例数
+     */
     private volatile int registrySize = 0;
+    /**
+     * 最后成功从 Eureka-Server 拉取注册信息时间戳
+     */
     private volatile long lastSuccessfulRegistryFetchTimestamp = -1;
+    /**
+     * 最后成功向 Eureka-Server 心跳时间戳
+     */
     private volatile long lastSuccessfulHeartbeatTimestamp = -1;
+    /**
+     * 心跳监控
+     */
     private final ThresholdLevelsMetric heartbeatStalenessMonitor;
+    /**
+     * 拉取监控
+     */
     private final ThresholdLevelsMetric registryStalenessMonitor;
 
     private final AtomicBoolean isShutdown = new AtomicBoolean(false);
@@ -179,6 +215,9 @@ public class DiscoveryClient implements EurekaClient {
     protected final EurekaClientConfig clientConfig;
     protected final EurekaTransportConfig transportConfig;
 
+    /**
+     * 初始化完成时间戳
+     */
     private final long initTimestampMs;
 
     private static final class EurekaTransport {
@@ -812,6 +851,7 @@ public class DiscoveryClient implements EurekaClient {
         logger.info(PREFIX + appPathIdentifier + ": registering service...");
         EurekaHttpResponse<Void> httpResponse;
         try {
+        	// AbstractJerseyEurekaHttpClient
             httpResponse = eurekaTransport.registrationClient.register(instanceInfo);
         } catch (Exception e) {
             logger.warn("{} - registration failed {}", PREFIX + appPathIdentifier, e.getMessage(), e);
@@ -908,17 +948,17 @@ public class DiscoveryClient implements EurekaClient {
     }
 
     /**
-     * Fetches the registry information.
-     *
-     * <p>
-     * This method tries to get only deltas after the first fetch unless there
-     * is an issue in reconciling eureka server and client registry information.
-     * </p>
-     *
-     * @param forceFullRegistryFetch Forces a full registry fetch.
-     *
-     * @return true if the registry was fetched
-     */
+	 * Fetches the registry information. 
+	 * 从eureka拉取注册信息
+	 * <p>
+	 * This method tries to get only deltas after the first fetch unless there is an
+	 * issue in reconciling eureka server and client registry information.
+	 * </p>
+	 *
+	 * @param forceFullRegistryFetch Forces a full registry fetch.
+	 *
+	 * @return true if the registry was fetched
+	 */
     private boolean fetchRegistry(boolean forceFullRegistryFetch) {
         Stopwatch tracer = FETCH_REGISTRY_TIMER.start();
 
@@ -1274,12 +1314,14 @@ public class DiscoveryClient implements EurekaClient {
                     renewalIntervalInSecs, TimeUnit.SECONDS);
 
             // InstanceInfo replicator
+			// 应用信息复制
             instanceInfoReplicator = new InstanceInfoReplicator(
                     this,
                     instanceInfo,
                     clientConfig.getInstanceInfoReplicationIntervalSeconds(),
                     2); // burstSize
 
+			// 监听应用实例信息状态变更
             statusChangeListener = new ApplicationInfoManager.StatusChangeListener() {
                 @Override
                 public String getId() {
@@ -1299,6 +1341,7 @@ public class DiscoveryClient implements EurekaClient {
                 }
             };
 
+			// 注册实例状态变更监听器
             if (clientConfig.shouldOnDemandUpdateStatusChange()) {
                 applicationInfoManager.registerStatusChangeListener(statusChangeListener);
             }
