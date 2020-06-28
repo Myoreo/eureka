@@ -16,17 +16,20 @@
 
 package com.netflix.eureka;
 
+import com.netflix.appinfo.ApplicationInfoManager;
 import com.netflix.appinfo.EurekaInstanceConfig;
 import com.netflix.appinfo.InstanceInfo;
-import com.netflix.appinfo.providers.EurekaConfigBasedInstanceInfoProvider;
-import com.netflix.discovery.DiscoveryClient;
-import com.netflix.discovery.EurekaClient;
-
-import com.netflix.appinfo.ApplicationInfoManager;
 import com.netflix.appinfo.MyDataCenterInstanceConfig;
+import com.netflix.appinfo.providers.EurekaConfigBasedInstanceInfoProvider;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.discovery.DefaultEurekaClientConfig;
+import com.netflix.discovery.DiscoveryClient;
+import com.netflix.discovery.EurekaClient;
 import com.netflix.discovery.EurekaClientConfig;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.net.UnknownHostException;
 
 /**
  * Sample Eureka service that registers with Eureka to receive and process requests.
@@ -35,7 +38,7 @@ import com.netflix.discovery.EurekaClientConfig;
  */
 public class ExampleEurekaService {
 
-    private static ApplicationInfoManager applicationInfoManager;
+	private static ApplicationInfoManager applicationInfoManager;
     private static EurekaClient eurekaClient;
 
     private static synchronized ApplicationInfoManager initializeApplicationInfoManager(EurekaInstanceConfig instanceConfig) {
@@ -56,11 +59,20 @@ public class ExampleEurekaService {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownHostException {
+
+        injectEurekaConfiguration();
 
         DynamicPropertyFactory configInstance = com.netflix.config.DynamicPropertyFactory.getInstance();
         ApplicationInfoManager applicationInfoManager = initializeApplicationInfoManager(new MyDataCenterInstanceConfig());
-        EurekaClient eurekaClient = initializeEurekaClient(applicationInfoManager, new DefaultEurekaClientConfig());
+        final EurekaClient eurekaClient = initializeEurekaClient(applicationInfoManager, new DefaultEurekaClientConfig());
+
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                eurekaClient.shutdown();
+            }
+        }));
 
         ExampleServiceBase exampleServiceBase = new ExampleServiceBase(applicationInfoManager, eurekaClient, configInstance);
         try {
@@ -69,5 +81,42 @@ public class ExampleEurekaService {
             // the stop calls shutdown on eurekaClient
             exampleServiceBase.stop();
         }
+    }
+
+    private static void injectEurekaConfiguration() throws UnknownHostException {
+//        String myHostName = InetAddress.getLocalHost().getHostName();
+		String myHostName = "127.0.0.1";
+		String myServiceUrl = "http://" + myHostName + ":8880/v2/";
+
+        System.setProperty("eureka.instanceId", "client-server-" + getProcessID());
+
+        System.setProperty("eureka.region", "default");
+        System.setProperty("eureka.name", "eureka");
+        System.setProperty("eureka.vipAddress", "eureka.mydomain.net");
+//        System.setProperty("eureka.vipAddress", "${eureka}.eureka.mydomain.net");
+        System.setProperty("eureka.port", "8981");
+        System.setProperty("eureka.preferSameZone", "false");
+        System.setProperty("eureka.shouldUseDns", "false");
+        System.setProperty("eureka.shouldRegisterWithEureka", "false");
+        System.setProperty("eureka.shouldFetchRegistry", "false");
+        System.setProperty("eureka.serviceUrl.defaultZone", myServiceUrl);
+        System.setProperty("eureka.serviceUrl.default.defaultZone", myServiceUrl);
+        System.setProperty("eureka.awsAccessId", "fake_aws_access_id");
+        System.setProperty("eureka.awsSecretKey", "fake_aws_secret_key");
+        System.setProperty("eureka.numberRegistrySyncRetries", "0");
+
+
+        System.setProperty("eureka.traffic.enabled", String.valueOf(Boolean.FALSE));
+
+
+//        ConfigurationManager.getConfigInstance().setProperty("eureka.environment", "production");
+//        System.setProperty("eureka", "production");
+    }
+
+    public static final int getProcessID() {
+        RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+        System.out.println(runtimeMXBean.getName());
+        return Integer.valueOf(runtimeMXBean.getName().split("@")[0])
+                .intValue();
     }
 }

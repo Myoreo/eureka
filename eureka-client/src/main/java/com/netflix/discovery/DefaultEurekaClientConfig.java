@@ -62,18 +62,26 @@ import org.slf4j.LoggerFactory;
 public class DefaultEurekaClientConfig implements EurekaClientConfig {
     private static final Logger logger = LoggerFactory.getLogger(DefaultEurekaClientConfig.class);
 
+    /**
+     * 命名空间
+     */
     public static final String DEFAULT_NAMESPACE = "eureka.";
     public static final String DEFAULT_ZONE = "defaultZone";
     private static final int DEFAULT_EXECUTOR_THREAD_POOL_SIZE = 5;
     private static final String ARCHAIUS_DEPLOYMENT_ENVIRONMENT = "archaius.deployment.environment";
     private static final String TEST = "test";
     private static final String EUREKA_ENVIRONMENT = "eureka.environment";
-
+    /**
+     * 配置文件对象
+     */
     private static final DynamicPropertyFactory configInstance = DynamicPropertyFactory.getInstance();
     private static final DynamicStringProperty EUREKA_PROPS_FILE = DynamicPropertyFactory.getInstance()
             .getStringProperty("eureka.client.props", "eureka-client");
 
     private final String namespace;
+    /**
+     * HTTP 传输配置
+     */
     private final EurekaTransportConfig transportConfig;
 
     public DefaultEurekaClientConfig() {
@@ -91,6 +99,7 @@ public class DefaultEurekaClientConfig implements EurekaClientConfig {
         ConfigurationManager.getConfigInstance().setProperty(ARCHAIUS_DEPLOYMENT_ENVIRONMENT, env);
 
         String eurekaPropsFile = EUREKA_PROPS_FILE.get();
+		logger.info("【EurekaClientConfig】eurekaPropsFile:{}", eurekaPropsFile);
         try {
             ConfigurationManager.loadCascadedPropertiesFromResources(eurekaPropsFile);
         } catch (IOException e) {

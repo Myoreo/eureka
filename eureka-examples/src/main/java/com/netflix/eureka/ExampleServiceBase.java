@@ -92,7 +92,7 @@ public class ExampleServiceBase {
             try {
                 nextServerInfo = eurekaClient.getNextServerFromEureka(vipAddress, false);
             } catch (Throwable e) {
-                System.out.println("Waiting ... verifying service registration with eureka ...");
+//                System.out.println("Waiting ... verifying service registration with eureka ...");
 
                 try {
                     Thread.sleep(10000);

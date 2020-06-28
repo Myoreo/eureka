@@ -258,8 +258,13 @@ public class DiscoveryClient implements EurekaClient {
     }
 
     public static class DiscoveryClientOptionalArgs {
+    	 /**
+         * 生成健康检查回调的工厂
+         */
         private Provider<HealthCheckCallback> healthCheckCallbackProvider;
-
+        /**
+         * 生成健康检查处理器的工厂
+         */
         private Provider<HealthCheckHandler> healthCheckHandlerProvider;
 
         private Collection<ClientFilter> additionalFilters;
@@ -382,6 +387,7 @@ public class DiscoveryClient implements EurekaClient {
             this.healthCheckCallbackProvider = null;
             this.healthCheckHandlerProvider = null;
         }
+        // 赋值 ApplicationInfoManager、EurekaClientConfig
         
         this.applicationInfoManager = applicationInfoManager;
         InstanceInfo myInfo = applicationInfoManager.getInfo();
@@ -391,12 +397,13 @@ public class DiscoveryClient implements EurekaClient {
         transportConfig = config.getTransportConfig();
         instanceInfo = myInfo;
         if (myInfo != null) {
-            appPathIdentifier = instanceInfo.getAppName() + "/" + instanceInfo.getId();
+            appPathIdentifier = instanceInfo.getAppName() + "/" + instanceInfo.getId();// 无实际业务用途，用于打 logger
         } else {
             logger.warn("Setting instanceInfo to a passed in null value");
         }
 
-        this.backupRegistryProvider = backupRegistryProvider;
+		// 当 Eureka-Client 启动时，无法从 Eureka-Server 读取注册信息（可能挂了），从备份注册中心读取注册信息
+		this.backupRegistryProvider = backupRegistryProvider;
 
         this.urlRandomizer = new EndpointUtils.InstanceInfoBasedUrlRandomizer(instanceInfo);
         localRegionApps.set(new Applications());
@@ -540,10 +547,11 @@ public class DiscoveryClient implements EurekaClient {
         );
 
         if (clientConfig.shouldRegisterWithEureka()) {
-            EurekaHttpClientFactory newRegistrationClientFactory = null;
-            EurekaHttpClient newRegistrationClient = null;
-            try {
-                newRegistrationClientFactory = EurekaHttpClients.registrationClientFactory(
+			// 注册
+			EurekaHttpClientFactory newRegistrationClientFactory = null;
+			EurekaHttpClient newRegistrationClient = null;
+			try {
+				newRegistrationClientFactory = EurekaHttpClients.registrationClientFactory(
                         eurekaTransport.bootstrapResolver,
                         eurekaTransport.transportClientFactory,
                         transportConfig
@@ -874,7 +882,8 @@ public class DiscoveryClient implements EurekaClient {
             if (httpResponse.getStatusCode() == 404) {
                 REREGISTER_COUNTER.increment();
                 logger.info("{} - Re-registering apps/{}", PREFIX + appPathIdentifier, instanceInfo.getAppName());
-                return register();
+				// eureka-server 不存在注册信息，则注册
+				return register();
             }
             return httpResponse.getStatusCode() == 200;
         } catch (Throwable e) {
@@ -981,6 +990,7 @@ public class DiscoveryClient implements EurekaClient {
                 logger.info("Registered Applications size is zero : {}",
                         (applications.getRegisteredApplications().size() == 0));
                 logger.info("Application version is -1: {}", (applications.getVersion() == -1));
+				// 全量
                 getAndStoreFullRegistry();
             } else {
                 getAndUpdateDelta(applications);
@@ -1066,7 +1076,9 @@ public class DiscoveryClient implements EurekaClient {
         logger.info("Getting all instance registry info from the eureka server");
 
         Applications apps = null;
-        EurekaHttpResponse<Applications> httpResponse = clientConfig.getRegistryRefreshSingleVipAddress() == null
+        String clientRegistryRefreshSingleVipAddress = clientConfig.getRegistryRefreshSingleVipAddress();
+		logger.info("clientRegistryRefreshSingleVipAddress:{}", clientRegistryRefreshSingleVipAddress);
+		EurekaHttpResponse<Applications> httpResponse = clientRegistryRefreshSingleVipAddress == null
                 ? eurekaTransport.queryClient.getApplications(remoteRegionsRef.get())
                 : eurekaTransport.queryClient.getVip(clientConfig.getRegistryRefreshSingleVipAddress(), remoteRegionsRef.get());
         if (httpResponse.getStatusCode() == Status.OK.getStatusCode()) {
@@ -1414,9 +1426,11 @@ public class DiscoveryClient implements EurekaClient {
      * isDirty flag on the instanceInfo is set to true
      */
     void refreshInstanceInfo() {
+    	// 刷新 数据中心信息
         applicationInfoManager.refreshDataCenterInfoIfRequired();
+        // 刷新 租约信息
         applicationInfoManager.refreshLeaseInfoIfRequired();
-
+		// 健康检查
         InstanceStatus status;
         try {
             status = getHealthCheckHandler().getStatus(instanceInfo.getStatus());

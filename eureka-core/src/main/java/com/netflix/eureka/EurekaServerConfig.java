@@ -94,6 +94,7 @@ public interface EurekaServerConfig {
     int getEIPBindingRetryIntervalMs();
 
     /**
+     * 是否开启自我保护模式。
      * Checks to see if the eureka server is enabled for self preservation.
      *
      * <p>
@@ -112,6 +113,7 @@ public interface EurekaServerConfig {
     boolean shouldEnableSelfPreservation();
 
     /**
+     * 开启自我保护模式比例，超过该比例后开启自我保护模式。
      * The minimum percentage of renewals that is expected from the clients in
      * the period specified by {@link #getRenewalThresholdUpdateIntervalMs()}.
      * If the renewals drop below the threshold, the expirations are disabled if
@@ -127,6 +129,7 @@ public interface EurekaServerConfig {
     double getRenewalPercentThreshold();
 
     /**
+     * 自我保护模式比例更新定时任务执行频率，单位：毫秒。
      * The interval with which the threshold as specified in
      * {@link #getRenewalPercentThreshold()} needs to be updated.
      *
@@ -231,6 +234,7 @@ public interface EurekaServerConfig {
     int getPeerNodeConnectionIdleTimeoutSeconds();
 
     /**
+     * 租约变更记录过期时长，单位：毫秒。默认值 ： 3 * 60 * 1000 毫秒。
      * Get the time for which the delta information should be cached for the
      * clients to retrieve the value without missing it.
      *
@@ -239,6 +243,7 @@ public interface EurekaServerConfig {
     long getRetentionTimeInMSInDeltaQueue();
 
     /**
+     * 移除队列里过期的租约变更记录的定时任务执行频率，单位：毫秒。默认值 ：30 * 1000 毫秒
      * Get the time interval with which the clean up task should wake up and
      * check for expired delta information.
      *
@@ -247,6 +252,7 @@ public interface EurekaServerConfig {
     long getDeltaRetentionTimerIntervalInMs();
 
     /**
+     * 租约过期定时任务执行频率，单位：毫秒。
      * Get the time interval with which the task that expires instances should
      * wake up and run.
      *
@@ -278,6 +284,7 @@ public interface EurekaServerConfig {
     long getASGCacheExpiryTimeoutMs();
 
     /**
+     * 读写缓存写入后过期时间，单位：秒。
      * Gets the time for which the registry payload should be kept in the cache
      * if it is not invalidated by change events.
      *
@@ -286,6 +293,7 @@ public interface EurekaServerConfig {
     long getResponseCacheAutoExpirationInSeconds();
 
     /**
+     * 只读缓存更新频率，单位：毫秒。只读缓存定时更新任务只更新读取过请求 (com.netflix.eureka.registry.Key)，因此虽然永不过期，也会存在读取不到的情况
      * Gets the time interval with which the payload cache of the client should
      * be updated.
      *
@@ -294,6 +302,7 @@ public interface EurekaServerConfig {
     long getResponseCacheUpdateIntervalMs();
 
     /**
+     * 是否开启只读请求响应缓存。响应缓存 ( ResponseCache ) 机制目前使用两层缓存策略。优先读取只读缓存，读取不到后读取固定过期的读写缓存
      * The {@link com.netflix.eureka.registry.ResponseCache} currently uses a two level caching
      * strategy to responses. A readWrite cache with an expiration policy, and a readonly cache
      * that caches without expiry.

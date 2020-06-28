@@ -172,7 +172,7 @@ public abstract class AbstractInstanceConfig implements EurekaInstanceConfig {
      */
     @Override
     public String getHostName(boolean refresh) {
-        return hostInfo.second();
+        return hostInfo.first(); //hostInfo.second();
     }
 
     /*

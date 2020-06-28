@@ -134,7 +134,9 @@ public abstract class EurekaHttpClientDecorator implements EurekaHttpClient {
         return execute(new RequestExecutor<Applications>() {
             @Override
             public EurekaHttpResponse<Applications> execute(EurekaHttpClient delegate) {
-                return delegate.getApplications(regions);
+            	EurekaHttpResponse<Applications> response =  delegate.getApplications(regions);
+				System.err.println("============" + response.getEntity());
+            	return response;
             }
 
             @Override

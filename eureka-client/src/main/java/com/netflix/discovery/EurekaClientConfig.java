@@ -395,14 +395,15 @@ public interface EurekaClientConfig {
 
     /**
      * Gets the list of fully qualified {@link java.net.URL}s to communicate with eureka
-     * server.
+     * server.<br>
+     * 
+     * Eureka-Server 的 URL 集合。
      *
      * <p>
      * Typically the eureka server {@link java.net.URL}s carry protocol,host,port,context
      * and version information if any.
      * <code>Example: http://ec2-256-156-243-129.compute-1.amazonaws.com:7001/eureka/v2/</code>
      * <p>
-     *
      * <p>
      * <em>The changes are effective at runtime at the next service url refresh cycle as specified by
      * {@link #getEurekaServiceUrlPollIntervalSeconds()}</em>
@@ -435,7 +436,7 @@ public interface EurekaClientConfig {
      * In the AWS environment, it is recommended that the values is 30 seconds
      * or less, since the firewall cleans up the connection information after a
      * few mins leaving the connection hanging in limbo
-     * </p>
+     * </p>getEurekaServerServiceUrls()
      *
      * @return time in seconds the connections to eureka can stay idle before it
      *         can be closed.
